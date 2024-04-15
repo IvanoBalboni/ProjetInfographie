@@ -29,6 +29,7 @@ class Vector():
 		return Vector(vec = np.multiply(self.vec,s))
 
 	def scalarProduct(self, v2):
+		print(self.vec,"   ",v2)
 		return np.dot(self.vec,v2)
 
 	def vectorProduct(self, v2):
@@ -55,7 +56,7 @@ vb = Vector(origin = v2,extremity = v1)
 print(va.addition(vb.vec))
 print(va.subtract(vb.vec))
 print(va.scalarMult(5))
-print(va.scalarProduct(vb.vec))
+print("scalar prod   ",va.scalarProduct(vb.vec))
 print(va.vectorProduct(vb.vec))
 print(va.norm())
 print(va.normalize())

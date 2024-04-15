@@ -9,7 +9,7 @@ class Plan(obj.Object):
 		self.norm = norm
 
 
-	def calcNorm(self):
+	def calcNorm(self, p):
 		return self.norm
 
 	def calcIntersection(self, camera, p):
@@ -21,7 +21,7 @@ class Plan(obj.Object):
 		D = (A*x) +(B*z) +(C*y)
 		div = (A*i + B*j + C*k)
 		if div == 0:
-			return (0, 0, 0)
+			return (0, 0, 50)
 
 		t =  - (A*fx + B*fy + C*fz +D) / div
 

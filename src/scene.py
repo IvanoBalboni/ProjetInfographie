@@ -4,6 +4,7 @@ import vector as vect
 import camera as cam
 import plan
 import color
+import sphere
 
 IMAGE = "rendu.png"
 COUL_FOND = (30, 30, 30)
@@ -21,22 +22,22 @@ class Scene:
         min = 0 # position de l'objet dans la liste d'objets
         (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (x, y, 0))
         #(x,y,0) le point P
-        comp = 0
         for k in range(1, len(self.objects)):
             '''
             calcule l'intersection avec chaque objet et compare sur l'axe
             z quel est l'intersection la plus proche de la camera.
             '''
             (Tx, Ty, Tz) = self.objects[k].calcIntersection(self.cam, (x, y, 0))
-            if( Tz < Mz):
+            if( Tz <  0) and (Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
-            comp += min
+        if( Mz > 0):
+            return COUL_FOND
         temp = self.objects[min]
-        print(comp)
         L = self.cam.ray( (Mx, My, Mz) )
-        N = temp.calcNorm()
-        LN = L.scalarProduct(N)
+        N = temp.calcNorm( (Mx, My, Mz) )
+        #rint((Mx, My, Mz))
+        LN = 0 #vector.VectscalarProduct(N)
         Ks = temp.specular
         Kd = temp.diffus
         Ia = temp.ambiant
@@ -54,10 +55,12 @@ class Scene:
         '''
         dessin
         '''
-
-        for i in range(width):
-            for j in range(height):
-                img.putpixel((i, j), (self.traceRay(i, j)))
+        topleft_x = round(self.cam.pos[0]) - width//2
+        topleft_y = round(self.cam.pos[1]) - height//2
+        for i in range(topleft_x, topleft_x +width):
+            for j in range(topleft_y, topleft_y +height):
+                print(i,j)
+                img.putpixel((topleft_x+i, topleft_y+j), (self.traceRay(i, j)))
 
         img.save(IMAGE)
         test = Image.open(IMAGE)
@@ -66,15 +69,14 @@ class Scene:
 
 
 
-M = (50.0, 50.0, -50.0)
-N = (0.0, 1.0, 2.00)
-N2 = (1.0, 1.0, 1.5)
+M = (0.0, 0.0, -50)
+N = (-100.0, -100.0, -30)
+K = (100.0, 100.0, -30)
+CAM = cam.Camera(400,400,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 50)
+P = sphere.Sphere(50, M, color.Color(255, 255, 0), None, None, None, False)
+L = sphere.Sphere(50, N, color.Color(255, 0, 0), None, None, None, False)
+S = sphere.Sphere(50, K, color.Color(0, 0, 255), None, None, None, False)
 
-C = cam.Camera(400,400,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 5.0)
-P = plan.Plan(N, M, color.Color(0, 255, 255), None, None, None, False)
-P2 = plan.Plan(N2, M, color.Color(255, 255, 0), None, None, None, False)
-P0 = (0.0, 5.0, 0.0)
-
-scene = Scene(C, [P,P2], [], [1,1,1], IMAGE)
+scene = Scene(CAM, [P,L,S], [], [1,1,1], IMAGE)
 
 scene.draw(400, 400)

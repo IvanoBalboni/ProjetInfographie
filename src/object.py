@@ -18,10 +18,10 @@ class Object():
 	def intersection(self, camera, p):
 		return self.calcIntersection(camera, p)
 
-	def calcNorm(self):
+	def calcNorm(self, p):
 		raise NotImplementedError("Object: Object type undefinned")
 
-	def norm(self):
+	def norm(self, p):
 		'''
 		ORB!!
 		'''
