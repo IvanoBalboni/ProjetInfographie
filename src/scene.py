@@ -1,8 +1,12 @@
 import numpy as np
-import * from PIL
 from PIL import Image
+import vector as vect
+import camera as cam
+import plan
+import color
 
 IMAGE = "rendu.png"
+COUL_FOND = (30, 30, 30)
 
 class Scene:
     def __init__(self, cam, objects, lights, ambLights, img):
@@ -17,6 +21,7 @@ class Scene:
         min = 0 # position de l'objet dans la liste d'objets
         (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (x, y, 0))
         #(x,y,0) le point P
+        comp = 0
         for k in range(1, len(self.objects)):
             '''
             calcule l'intersection avec chaque objet et compare sur l'axe
@@ -26,9 +31,21 @@ class Scene:
             if( Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
-        N = self.objets[min].calcNorm()
-        Ir
+            comp += min
+        temp = self.objects[min]
+        print(comp)
+        L = self.cam.ray( (Mx, My, Mz) )
+        N = temp.calcNorm()
+        LN = L.scalarProduct(N)
+        Ks = temp.specular
+        Kd = temp.diffus
+        Ia = temp.ambiant
+        C = self.objects[min].color
+        r,g,b = round(C.r +LN), round(C.g +LN), round(C.b +LN)
 
+
+
+        return (r, g, b)
 
 
     def draw(self, width, height):
@@ -40,20 +57,24 @@ class Scene:
 
         for i in range(width):
             for j in range(height):
+                img.putpixel((i, j), (self.traceRay(i, j)))
 
-
-            pass
         img.save(IMAGE)
+        test = Image.open(IMAGE)
 
 
 
 
 
-M = (0.0, 0.0, -10.0)
-N = (0.0, -1.0, 1.00)
+M = (50.0, 50.0, -50.0)
+N = (0.0, 1.0, 2.00)
+N2 = (1.0, 1.0, 1.5)
 
-cam = cam.Camera(11,11,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 5.0)
-P = Plan(N, M, None, None, None, None, False)
+C = cam.Camera(400,400,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 5.0)
+P = plan.Plan(N, M, color.Color(0, 255, 255), None, None, None, False)
+P2 = plan.Plan(N2, M, color.Color(255, 255, 0), None, None, None, False)
 P0 = (0.0, 5.0, 0.0)
 
-scene = Scene(cam, [P], [], [1,1,1], IMAGE)
+scene = Scene(C, [P,P2], [], [1,1,1], IMAGE)
+
+scene.draw(400, 400)

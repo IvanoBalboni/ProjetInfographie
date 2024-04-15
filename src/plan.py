@@ -19,19 +19,22 @@ class Plan(obj.Object):
 		(fx, fy, fz) = camera.F # focale : F
 
 		D = (A*x) +(B*z) +(C*y)
-		t =  - (A*fx + B*fy + C*fz +D) / (A*i + B*j + C*k)
+		div = (A*i + B*j + C*k)
+		if div == 0:
+			return (0, 0, 0)
+
+		t =  - (A*fx + B*fy + C*fz +D) / div
 
 		(r1, r2, r3) = (fx + t*i,fy + t*j, fz + t*k)
 
 		return (r1, r2, r3)
 
 
-
+'''
 M = (0.0, 0.0, -10.0)
 N = (0.0, -1.0, 1.00)
 
 CAM = cam.Camera(11,11,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 5.0)
 P = Plan(N, M, None, None, None, None, False)
 P0 = (0.0, 5.0, 0.0)
-
-print(P.intersection(CAM, P0))
+'''
