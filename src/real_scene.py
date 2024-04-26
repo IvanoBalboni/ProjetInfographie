@@ -10,7 +10,6 @@ IMAGE = "rendu.png"
 COUL_FOND = (30, 30, 30)
 
 class Scene:
-    """Classe qui va nous cree l'image finale. """
     def __init__(self, cam, objects, lights, ambLights, img):
         self.cam = cam
         self.objects = objects
@@ -19,21 +18,16 @@ class Scene:
         self.img = img
 
 
-    def traceRay(self, x, y): 
-        """Va trouver le point d'intersection chaque objet et trouver
-        celle ce trouvant la plus proche. A partir de ca, la fonction 
-        va retourner la bonne couleur du pixel de l'image"""
+    def traceRay(self, x, y): # stocke chaque point d'intersection du rayon
         min = 0 # position de l'objet dans la liste d'objets
         (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (x, y, 0))
         #(x,y,0) le point P
-        print("Premier z = ", Mz)
         for k in range(1, len(self.objects)):
             '''
             calcule l'intersection avec chaque objet et compare sur l'axe
             z quel est l'intersection la plus proche de la camera.
             '''
             (Tx, Ty, Tz) = self.objects[k].calcIntersection(self.cam, (x, y, 0))
-            print("Potentiel prochain z est: ", Tz)
             if( Tz <  0) and (Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
@@ -56,19 +50,18 @@ class Scene:
 
 
     def draw(self, width, height):
-        """Va faire l'appel recursif pour chaque pixel de notre image """
         img = Image.new('RGB', (width, height), color = (100,60,100))
-        P0 = [-(width/2-0.5), height/2-0.5]  # Base utilisee pour tout les suivant
+        P0 = [-200, 200]
         '''
         dessin
         '''
         '''topleft_x = round(self.cam.pos[0]) - width//2
         topleft_y = round(self.cam.pos[1]) - height//2'''
         for i in range(width):
-            for j in range(height):
+            for j in range(height):                
                 x = P0[0]+i
                 y = P0[1]-j
-                print("POUR I J ", i, j, "X ET Y SONT ", x, y)
+                print(i,j, x, y)
                 img.putpixel((i, j), (self.traceRay(x, y)))
 
         img.save(IMAGE)
@@ -78,14 +71,14 @@ class Scene:
 
 
 
-M = (0.0, 0.0, -3)
-N = (-2.0, -2.0, -5)
-K = (2.0, 2.0, -5)
-CAM = cam.Camera(7,7,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 5)
-P = sphere.Sphere(1, M, color.Color(255, 255, 0), None, None, None, False)
-L = sphere.Sphere(1, N, color.Color(255, 0, 0), None, None, None, False)
-S = sphere.Sphere(1, K, color.Color(0, 0, 255), None, None, None, False)
+M = (0.0, 0.0, -50)
+N = (-100.0, -100.0, -30)
+K = (100.0, 100.0, -30)
+CAM = cam.Camera(401,401,(0.0, 0.0, 0.0), (0.0, 0.0, 0.0), 50)
+P = sphere.Sphere(50, M, color.Color(255, 255, 0), None, None, None, False)
+L = sphere.Sphere(50, N, color.Color(255, 0, 0), None, None, None, False)
+S = sphere.Sphere(50, K, color.Color(0, 0, 255), None, None, None, False)
 
 scene = Scene(CAM, [P,L,S], [], [1,1,1], IMAGE)
 
-scene.draw(7, 7)
+scene.draw(401, 401)
