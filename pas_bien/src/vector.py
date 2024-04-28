@@ -24,11 +24,11 @@ class Vector():
 
     def addition(self, v2):
         """Addition vecteur x vecteur, retourne un vecteur."""
-        return Vector(vec = np.add(self.vec,v2.vec))
+        return Vector(vec = np.add(self.vec,v2))
 
     def subtract(self, v2):
         """Soustraction vecteur x vecteur, retourne un vecteur."""
-        return Vector(vec = np.subtract(self.vec,v2.vec))
+        return Vector(vec = np.subtract(self.vec,v2))
 
     def scalarMult(self, s):
         """Multiplication vecteur x scalaire, retourne un vecteur."""
@@ -39,11 +39,9 @@ class Vector():
         print(self.vec," * ",v2)
         return np.dot(self.vec,v2)
 
-    def crossProduct(self, v2):
-        """Multiplication vecteur x vecteur, retourne un vecteur
-        perpendiculaire aux 2.
-        """
-        return Vector(vec = np.cross(self.vec,v2.vec))
+    def vectorProduct(self, v2):
+        """Multiplication vecteur x vecteur, retourne un vecteur."""
+        return Vector(vec = np.cross(self.vec,v2))
 
     def norm(self):
         return np.linalg.norm(self.vec)
@@ -52,16 +50,6 @@ class Vector():
         n = self.norm()
         return Vector(vec = np.divide(self.vec,n))
 
-    def __getitem__(self, n):
-        return self.vec[n]
-
-    def __setitem__(self, n, x):
-        if n == 0:
-            self.vec = (x , self.vec[1], self.vec[2])
-        elif n == 1:
-            self.vec = (self.vec[0], x, self.vec[2])
-        else:
-            self.vec = (self.vec[0], self.vec[1], x)
 
     def __str__(self):
         string = "(" + str(self.vec[0]) + ", " + str(self.vec[1]) + ", " + str(self.vec[2]) + ")"

@@ -19,12 +19,12 @@ class Scene:
         self.img = img
 
 
-    def traceRay(self, i, j, resolution):
+    def traceRay(self, x, y):
         """Va trouver le point d'intersection chaque objet et trouver
         celle ce trouvant la plus proche. A partir de ca, la fonction
         va retourner la bonne couleur du pixel de l'image"""
         min = 0 # position de l'objet dans la liste d'objets
-        (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (i, j), resolution)
+        (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (x, y, 0))
         #(x,y,0) le point P
         #print("Premier z = ", Mz)
         for k in range(1, len(self.objects)):
@@ -32,19 +32,18 @@ class Scene:
             calcule l'intersection avec chaque objet et compare sur l'axe
             z quel est l'intersection la plus proche de la camera.
             '''
-            (Tx, Ty, Tz) = self.objects[k].calcIntersection(self.cam, (i, j), resolution)
+            (Tx, Ty, Tz) = self.objects[k].calcIntersection(self.cam, (x, y, 0))
             #print("Potentiel prochain z est: ", Tz)
             if( Tz <  0) and (Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
         if( Mz > 0):
-            #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
         temp = self.objects[min]
-        #L = self.cam.ray( (Mx, My, Mz), resolution )
+        L = self.cam.ray( (Mx, My, Mz) )
         N = temp.calcNorm( (Mx, My, Mz) )
-        #print(N)
-        print("intersection",(Mx, My, Mz),"objet:",min)
+        print(N)
+        #rint((Mx, My, Mz))
         LN = 0 #L.scalarProduct(N)
         Ks = temp.specular
         Kd = temp.diffus
@@ -61,15 +60,18 @@ class Scene:
         """Va faire l'appel recursif pour chaque pixel de notre image """
         img = Image.new('RGB', (width, height), color = (100,60,100))
         #P0 = [-(width/2-0.5), height/2-0.5]  # Base utilisee pour tout les suivant
-        #topleft_x = round(self.cam.pos[0]) - width//2
-        #y = round(self.cam.pos[1]) + height//2
         '''
         dessin
         '''
+        topleft_x = round(self.cam.pos[0]) - width//2
+        y = round(self.cam.pos[1]) + height//2
         for i in range(width):
+            x = topleft_x
             for j in range(height):
                 #print("POUR I J ", i, j, "X ET Y SONT ", x, y)
-                img.putpixel((i, j), (self.traceRay(i, j, (width, height))))
+                img.putpixel((i, j), (self.traceRay(x, y)))
+                x +=1
+            y-=1
 
         img.save(IMAGE)
         test = Image.open(IMAGE)
@@ -93,11 +95,11 @@ K = (100.0, 100.0, -50)
 W = 401
 H = 401
 F = round( (H/2) / np.tan(45/2) )
-CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
+CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 0.0, 1.0), F)
 P = sphere.Sphere(50, M, color.Color(255, 255, 0), None, None, None, False)
 L = sphere.Sphere(50, N, color.Color(255, 0, 0), None, None, None, False)
 S = sphere.Sphere(50, K, color.Color(0, 0, 255), None, None, None, False)
 
 scene = Scene(CAM, [P,L,S], [], [1,1,1], IMAGE)
 
-scene.draw(100, 100)
+scene.draw(W, H)

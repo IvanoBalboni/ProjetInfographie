@@ -12,10 +12,10 @@ class Plan(obj.Object):
 	def calcNorm(self, p):
 		return self.norm
 
-	def calcIntersection(self, camera, p, resolution):
+	def calcIntersection(self, camera, p):
 		(A, B, C) = self.norm # vecteur traversant le plan
 		(x, y, z) = self.pos # point definissant le plan : M
-		(i, j, k) = camera.ray(p, resolution).vec # rayon de vue : FP
+		(i, j, k) = camera.ray(p).vec # rayon de vue : FP
 		(fx, fy, fz) = camera.F # focale : F
 
 		D = (A*x) +(B*z) +(C*y)

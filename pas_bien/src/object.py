@@ -12,12 +12,13 @@ class Object():
         self.ambiant = ambiant
         self.shadow = shadow
 
-    def calcIntersection(self, camera, p, resolution):
+    def calcIntersection(self, camera, p):
+        #TODO recoit FP
         raise NotImplementedError("Object: Object type undefinned")
 
 
     def intersection(self, camera, p):
-        return self.calcIntersection(camera, p, resolution)
+        return self.calcIntersection(camera, p)
 
     def calcNorm(self, p):
         raise NotImplementedError("Object: Object type undefinned")
