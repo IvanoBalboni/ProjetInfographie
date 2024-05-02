@@ -5,6 +5,7 @@ import camera as cam
 import plan
 import color
 import sphere
+import light
 
 IMAGE = "rendu.png"
 COUL_FOND = (30, 30, 30)
@@ -23,6 +24,7 @@ class Scene:
         """Va trouver le point d'intersection chaque objet et trouver
         celle ce trouvant la plus proche. A partir de ca, la fonction
         va retourner la bonne couleur du pixel de l'image"""
+        # 1er phase: Trouver un point d'intersection
         min = 0 # position de l'objet dans la liste d'objets
         (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (i, j), resolution)
         #(x,y,0) le point P
@@ -37,12 +39,24 @@ class Scene:
             if( Tz <  0) and (Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
-        if( Mz > 0):
+        if( Mz > 0):  # == Pas d'intersection trouve
             #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
+        # Fin 1er phase
         temp = self.objects[min]
+        #2eme phase: Trouver le rayon reflechie  au point d'intersection Ri
+        # R = 2(-I.N).N+I
+        # Avec N norme du point d'intersection de l'objet
+        # I rayon de Vue    IV
+            
         #L = self.cam.ray( (Mx, My, Mz), resolution )
+        
         N = temp.calcNorm( (Mx, My, Mz) )
+        '''print("N: ", type(N))
+        IV = self.cam.ray((i,j), resolution)
+        test = (IV.scalarMult(-1)).scalarProduct(N)
+        print("test: ", test)
+        Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)'''
         #print(N)
         print("intersection",(Mx, My, Mz),"objet:",min)
         LN = 0 #L.scalarProduct(N)
@@ -86,18 +100,35 @@ P = sphere.Sphere(1, M, color.Color(255, 255, 0), None, None, None, False)
 L = sphere.Sphere(1, N, color.Color(255, 0, 0), None, None, None, False)
 S = sphere.Sphere(1, K, color.Color(0, 0, 255), None, None, None, False)
 '''
+# Pour plus de facilite, la taille de l'image = taille du dessin
+W = 401  # Width
+H = 401  # Height
 
-M = (0.0, 0.0, -50)
-N = (-100.0, -100.0, -50)
-K = (100.0, 100.0, -50)
-W = 401
-H = 401
+# POsition des spheres
+SP1 = (0.0, 0.0, -50)
+SP2 = (-100.0, -100.0, -50)
+SP3 = (100.0, 100.0, -50)
+
+# Position des plans
+PP1 = ((0.0, 0.25, -1.00), (0.0, 0.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
+ 
+# Position des lumieres
+LP1 = (0.0, 100.0, -25)
+
+#Calcul focale venant de https://stackoverflow.com/questions/18176215/how-to-select-focal-lengh-in-ray-tracing
 F = round( (H/2) / np.tan(45/2) )
-CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
-P = sphere.Sphere(50, M, color.Color(255, 255, 0), None, None, None, False)
-L = sphere.Sphere(50, N, color.Color(255, 0, 0), None, None, None, False)
-S = sphere.Sphere(50, K, color.Color(0, 0, 255), None, None, None, False)
 
-scene = Scene(CAM, [P,L,S], [], [1,1,1], IMAGE)
+CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
+
+#Creation des objets
+S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), None, None, None, False)
+S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), None, None, None, False)
+S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), None, None, None, False)
+
+P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,250,0), None, None, None, False)
+
+L1 = light.Light(LP1, color.Color(1, 1, 1))
+
+scene = Scene(CAM, [S1, S2, S3, P1], [L1], [1,1,1], IMAGE)
 
 scene.draw(100, 100)

@@ -36,8 +36,8 @@ class Vector():
 
     def scalarProduct(self, v2):
         """Multiplication vecteur x vecteur, retourne un scalaire."""
-        print(self.vec," * ",v2)
-        return np.dot(self.vec,v2)
+        print(self.vec, " * ", v2)
+        return np.dot(self.vec, v2)
 
     def crossProduct(self, v2):
         """Multiplication vecteur x vecteur, retourne un vecteur

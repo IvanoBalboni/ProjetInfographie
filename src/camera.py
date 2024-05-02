@@ -26,7 +26,9 @@ class Camera:
         dy = self.height / resolution[1]
         dx = self.width  / resolution[0]
         H = self.orientation.normalize()
+        #print("H is: ", H)
         D = H.crossProduct(vect.Vector(origin=self.F, extremity = self.pos) ).normalize()
+        #print("D is: ", D)
         P0 = vect.Vector(vec=self.pos).addition(
             H.scalarMult(self.height/2 - dy/2) ).subtract(
             D.scalarMult(self.width/2 - dx/2) )
