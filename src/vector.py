@@ -24,7 +24,7 @@ class Vector():
 
     def addition(self, v2):
         """Addition vecteur x vecteur, retourne un vecteur."""
-        return Vector(vec = np.add(self.vec,v2.vec))
+        return Vector(vec = np.add(self.vec, v2.vec))
 
     def subtract(self, v2):
         """Soustraction vecteur x vecteur, retourne un vecteur."""
@@ -36,8 +36,8 @@ class Vector():
 
     def scalarProduct(self, v2):
         """Multiplication vecteur x vecteur, retourne un scalaire."""
-        print(self.vec, " * ", v2)
-        return np.dot(self.vec, v2)
+        #print(type(self.vec), " * ", type(v2))
+        return np.dot(self.vec, v2.vec)
 
     def crossProduct(self, v2):
         """Multiplication vecteur x vecteur, retourne un vecteur
@@ -67,17 +67,24 @@ class Vector():
         string = "(" + str(self.vec[0]) + ", " + str(self.vec[1]) + ", " + str(self.vec[2]) + ")"
         return string
 
-'''
-v1 = (1.0,2.0,3.0)
-v2 = (4.0,5.0,6.0)
-va = Vector(origin=v1,extremity= v2)
-vb = Vector(origin = v2,extremity = v1)
 
-print(va.addition(vb.vec))
+'''v1 = (1.0,2.0,3.0)
+v2 = (4.0,5.0,6.0)
+va = Vector(origin=v1, extremity=v2)
+vb = Vector(origin=v2, extremity=v1)
+
+print(va.addition(vb))
 print(va.subtract(vb.vec))
 print(va.scalarMult(5))
 print("scalar prod   ",va.scalarProduct(vb.vec))
 print(va.vectorProduct(vb.vec))
 print(va.norm())
-print(va.normalize())
-'''
+print(va.normalize())'''
+
+#Test pour calcul rayon reflechi
+'''IV = Vector(vec = (0, 0, -1))
+N = Vector(vec = (0, 1 / (2**0.5), 1 / (2**0.5)))
+Ri_test1 = N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 )
+print(Ri_test1)
+Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)'''
+print(Ri)

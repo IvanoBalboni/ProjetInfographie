@@ -6,7 +6,7 @@ import vector as vect
 class Plan(obj.Object):
 	def __init__( self, norm, pos, color, diffus, speculos, ambiant, shadow):
 		obj.Object.__init__(self, pos, color, diffus, speculos, ambiant, shadow)
-		self.norm = norm
+		self.norm = vect.Vector(vec=norm)
 
 
 	def calcNorm(self, p):

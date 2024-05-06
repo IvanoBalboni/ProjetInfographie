@@ -19,12 +19,10 @@ class Scene:
         self.ambLights = ambLights
         self.img = img
 
-
-    def traceRay(self, i, j, resolution):
+    def closest_inter(self, i, j, resolution):
         """Va trouver le point d'intersection chaque objet et trouver
         celle ce trouvant la plus proche. A partir de ca, la fonction
         va retourner la bonne couleur du pixel de l'image"""
-        # 1er phase: Trouver un point d'intersection
         min = 0 # position de l'objet dans la liste d'objets
         (Mx, My, Mz) = self.objects[0].calcIntersection(self.cam, (i, j), resolution)
         #(x,y,0) le point P
@@ -39,33 +37,65 @@ class Scene:
             if( Tz <  0) and (Tz < Mz):
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
-        if( Mz > 0):  # == Pas d'intersection trouve
+        return ((Mx, My, Mz), min)
+                
+    def traceRay(self, i, j, resolution):
+        # 1er phase: Trouver un point d'intersection ################
+        test_inter = self.closest_inter(i, j, resolution)
+        coor_inter = test_inter[0]
+        obj_min = test_inter[1]
+        #print(coor_inter, obj_min)
+        if( coor_inter[2] > 0):  # == Pas d'intersection trouve
             #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
-        # Fin 1er phase
-        temp = self.objects[min]
-        #2eme phase: Trouver le rayon reflechie  au point d'intersection Ri
+        # Fin 1er phase #####################
+        
+        temp = self.objects[obj_min]
+        # Parametre lumiere des obj_min: /!\ ce sont des constantes
+        Ks = temp.specular 
+        Kd = temp.diffus
+        Ka = temp.ambiant
+        
+        N = temp.calcNorm( coor_inter ) # Norme de l'obj_min
+        #print("N: ", type(N))
+        
+        # 2eme phase: Trouver le rayon reflechie  au point d'intersection Ri ####
         # R = 2(-I.N).N+I
         # Avec N norme du point d'intersection de l'objet
         # I rayon de Vue    IV
             
         #L = self.cam.ray( (Mx, My, Mz), resolution )
         
-        N = temp.calcNorm( (Mx, My, Mz) )
-        '''print("N: ", type(N))
-        IV = self.cam.ray((i,j), resolution)
-        test = (IV.scalarMult(-1)).scalarProduct(N)
-        print("test: ", test)
-        Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)'''
-        #print(N)
-        print("intersection",(Mx, My, Mz),"objet:",min)
+        IV = self.cam.ray((i,j), resolution)  
+        '''test1 = IV.scalarMult(-1)  #.scalarProduct(N)
+        print("test: ", test1)
+        test2 = test1.scalarProduct(N)'''
+        # Rayon reflechi en P :
+        Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)
+        #print(Ri)
+        
+        #Cr = traceRay(Ri)*ks a faire
+        
+        # Fin 2eme phase #################
+        
+        # 3eme phase: coefficient de transmission de l'objets #####
+        
+        # The fuck?
+        
+        # Fin 3eme phase ###########
+        
+        # 4eme phase: Calcul de l'ombre ############
+        
+        # Fin 4eme phase ########################
+        
+        
+        print("intersection", coor_inter, "objet:", obj_min)
         LN = 0 #L.scalarProduct(N)
-        Ks = temp.specular
-        Kd = temp.diffus
-        Ia = temp.ambiant
-        C = self.objects[min].color
-        r,g,b = round(C.r +LN), round(C.g +LN), round(C.b +LN)
-
+        Io = self.objects[obj_min].color
+        
+        # 5eme phase: Addition de toutes les couleurs ############
+        r,g,b = round(Io.r +LN), round(Io.g +LN), round(Io.b +LN)
+        # Fin 5eme phase ##############################
 
 
         return (r, g, b)
