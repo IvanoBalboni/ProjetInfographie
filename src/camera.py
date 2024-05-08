@@ -38,7 +38,7 @@ class Camera:
         FP = vect.Vector(origin = self.F, extremity = P.vec)
         #print(dx,dy)
         #print(P0)
-        #print("FP",FP)
+        #print("in ray type FP",type(FP))
         return FP
 
 '''

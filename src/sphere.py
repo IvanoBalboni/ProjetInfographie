@@ -8,12 +8,14 @@ class Sphere(obj.Object):
         obj.Object.__init__(self, pos, color, diffus, specular, ambiant, shadow)
         self.rayon = rayon
 
-    def calcIntersection(self, camera, p, resolution):
+    def calcIntersection(self, origin_coor, chosen_ray):
         #P(i,j) avec i,j coordonnees du pixel sur l'image
         (l,m,n) = self.pos # centre de la sphere
         #delta = (2 * ( fx - l) **2 +m +n))**2 - 4 * (self.rayon + l**2 + m**2 + n**2)
-        (i, j, k) = camera.ray(p, resolution).vec # rayon de vue : FP
-        (fx, fy, fz) = camera.F # focale : F
+        (i, j, k) = chosen_ray.vec # rayon de vue : FP
+        #print("from sphere", i,j,k)
+        (fx, fy, fz) = origin_coor # focale : F
+        #print("F in calcInter", fx, fy, fz)
         cx, cy, cz = (fx-l), (fy-m), (fz-n) # (x-l) (y-m) (z-n)
         
         # (x - l)^2 + (y - m)^2 + (z - n)^2 - r^2
@@ -47,11 +49,11 @@ class Sphere(obj.Object):
             #Premiere solution
             t1 = (-b + delta**0.5) / (2 * a)
             s1 = (fx+ i*t1, fy+ j*t1, fz+ k*t1)
-            vec1 = vect.Vector(origin = camera.F, extremity = s1 )
+            vec1 = vect.Vector(origin = origin_coor, extremity = s1 )
             #Seconde solution
             t2 = (-b + delta**0.5) / (2 * a)
             s2 = (fx+ i*t2, fy+ j*t2, fz+ k*t2)
-            vec2 = vect.Vector(origin = camera.F, extremity = s2 )
+            vec2 = vect.Vector(origin = origin_coor, extremity = s2 )
 
             #Comparaison pour renvoyer le plus petit == plus proche de la cam
             if vec2.norm() > vec1.norm(): 

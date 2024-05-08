@@ -86,5 +86,5 @@ print(va.normalize())'''
 N = Vector(vec = (0, 1 / (2**0.5), 1 / (2**0.5)))
 Ri_test1 = N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 )
 print(Ri_test1)
-Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)'''
-print(Ri)
+Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)
+print(Ri)'''
