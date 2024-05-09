@@ -38,28 +38,28 @@ class Scene:
                 (Mx, My, Mz) = (Tx, Ty, Tz)
                 min = k
         return ((Mx, My, Mz), min)
-                
+
     def traceRay(self, origin_coor, chosen_ray):
         # 1er phase: Trouver un point d'intersection ################
         test_inter = self.closest_inter(origin_coor, chosen_ray)
         coor_inter = test_inter[0]
         obj_min = test_inter[1]
-        
+
         #print(coor_inter, obj_min)
         if( coor_inter[2] > 0):  # == Pas d'intersection trouve
             #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
         # Fin 1er phase #####################
-        
-        temp = self.objects[obj_min]  
+
+        temp = self.objects[obj_min]
         # Parametre lumiere des obj_min: /!\ ce sont des constantes compris entre 0 et 1
-        Ks = temp.specular 
+        Ks = temp.specular
         Kd = temp.diffus
         Ka = temp.ambiant
-        
+
         N = temp.calcNorm( coor_inter ) # Norme de l'obj_min
         #print("N: ", type(N))
-        
+
         # Methode vu dans https://omaraflak.medium.com/ray-tracing-from-scratch-in-python-41670e6a96f9 :
         # Pour les prochains calculs traceRay de notre objet,
         # Afin d'éviter les risques que notre objet soit compter comme une intersection
@@ -69,15 +69,16 @@ class Scene:
         # /!\ Les coordonnees ne sont pas des vecteurs
         #print("Coor inter", coor_inter)
         #print("Coor inter ray", coor_inter_ray)
-        
+
         # 2eme phase: Trouver le rayon reflechie  au point d'intersection Ri ####
         # R = 2(-I.N).N+I
         # Avec N norme du point d'intersection de l'objet
         # I rayon de Vue    IV
-            
+
         #L = self.cam.ray( (Mx, My, Mz), resolution )
-        
+
         IV = chosen_ray # Rayon vue depuis la camera
+        L = IV.normalize()
         #print("type est", type(IV))
         '''test1 = IV.scalarMult(-1)  #.scalarProduct(N)
         print("test: ", test1)
@@ -87,18 +88,18 @@ class Scene:
         #print(Ri)
         #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
         #print(Cr)
-        
+
         # Fin 2eme phase #################
-        
+
         # 3eme phase: coefficient de transmission de l'objets #####
-        
+
         # Refraction pour les objets transparents -> Ct
-        
+
         # Fin 3eme phase ###########
-        
+
         # 4eme phase: Calcul de l'ombre + composante diffus ############
-        
-        Cd = (0, 0, 0)  #Couleur noire
+
+        Id = (0, 0, 0)  #Couleur noire
         for i in range(len(self.lights)):
             Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
             Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
@@ -109,20 +110,25 @@ class Scene:
             dist_obj = np.sqrt(np.sum(np.square(np.subtract(closest_obj[0], coor_inter))))
             #print("DISTANCE OBJECT OBJ", dist_obj, obj_min)
             if dist_light < dist_obj:
-                Cd = (255,255,255)
+                Id = (255,255,255)
             else:
-                return(Cd)
-            
-        
+                Id = (0,0,0)
+
+        #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
+
         # Fin 4eme phase ########################
-        
-        
+
+
         #print("intersection", coor_inter, "objet:", obj_min)
-        LN = 0 #L.scalarProduct(N)
+        LN = L.scalarProduct(N)
+        print("LN",LN)
+        print("Kd",Kd)
         Io = self.objects[obj_min].color
-        
+        print("Io",Io)
+        print("Id",Id[0],Id[1],Id[2])
+
         # 5eme phase: Addition de toutes les couleurs ############
-        r,g,b = round(Io.r + Cd[0]), round(Io.g + Cd[1]), round(Io.b + Cd[2])
+        r,g,b = round(Io.r*(Ka + Kd*LN)), round(Io.g*(Ka + Kd*LN)),round(Io.b*(Ka + Kd*LN))
         vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
         # Fin 5eme phase ##############################
@@ -178,7 +184,7 @@ SP1 = (0.0, 0.0, -49)
 
 # Position des plans
 #PP1 = ((0.0, 0.25, -1.00), (0.0, 0.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
- 
+
 # Position des lumieres
 LP1 = (0.0, 0.0, -50)
 
@@ -188,7 +194,7 @@ F = round( (H/2) / np.tan(45/2) )
 CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
 
 #Creation des objets
-S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), None, 0.7, None, False)
+S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.5, 0.7, 0.3, False)
 #S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), None, 0.2, None, False)
 #S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), None, 0.2, None, False)
 
@@ -198,4 +204,4 @@ L1 = light.Light(LP1, color.Color(1, 1, 1))
 
 scene = Scene(CAM, [S1], [L1], [1,1,1], IMAGE)  #, S2, S3, P1
 
-scene.draw(100, 100)
+scene.draw(700, 700)
