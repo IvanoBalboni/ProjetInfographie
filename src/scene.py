@@ -47,7 +47,7 @@ class Scene:
                     #print(M, TM)
                     #vu que les intersections sont sur la meme droite on peut tester
                     #la direction du vecteur TM pour determiner le plus proche
-                    if FT.norm() < FM.norm():
+                    if FT.norm() > FM.norm():
                         min = k
                         M = T
                 else:
@@ -119,26 +119,37 @@ class Scene:
 
         Id = (0, 0, 0)  #Couleur noire
         for i in range(len(self.lights)):
-            Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
-            Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
-            closest_obj = self.closest_inter(coor_inter_ray, Rl) # Trouve l'element le plus proche
+            L = (vect.Vector(origin = self.lights[i].pos, extremity = coor_inter)).normalize()
+            LN = L.scalarProduct(N)
+            #couleur de lumiere pas sur de laisser
+            if obj_min == self.closest_inter(self.lights[i].pos, L)[1]:
+                col = self.lights[i].color
+                r,g,b = col.r, col.g, col.b
+                r,g,b = r*LN, g*LN, b*LN
+                Ir,Ig,Ib = Id
+                Id = (Ir+r, Ig+g, Ib+b)
+
+            #Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
+            #Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
+            #closest_obj = self.closest_inter(coor_inter_ray, Rl) # Trouve l'element le plus proche
             # Find the distance between the two points
-            dist_light = np.sqrt(np.sum(np.square(np.subtract(self.lights[i].pos, coor_inter))))
+            #dist_light = np.sqrt(np.sum(np.square(np.subtract(self.lights[i].pos, coor_inter))))
             #print("DISTANCE OBJECT LIGHT", dist_light)
-            dist_obj = np.sqrt(np.sum(np.square(np.subtract(closest_obj[0], coor_inter))))
+            #dist_obj = np.sqrt(np.sum(np.square(np.subtract(closest_obj[0], coor_inter))))
             #print("DISTANCE OBJECT OBJ", dist_obj, obj_min)
+            """
             if dist_light < dist_obj:
                 Id = (255,255,255)
             else:
                 Id = (0,0,0)
-
+            """
+        print(Id)
         #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
 
         # Fin 4eme phase ########################
 
 
         #print("intersection", coor_inter, "objet:", obj_min)
-        LN = L.scalarProduct(N)
         #print("LN",LN)
         #print("Kd",Kd)
         Io = self.objects[obj_min].color
@@ -146,7 +157,7 @@ class Scene:
         #print("Id",Id[0],Id[1],Id[2])
 
         # 5eme phase: Addition de toutes les couleurs ############
-        r,g,b = round(Io.r*(Ka + Kd*LN)), round(Io.g*(Ka + Kd*LN)),round(Io.b*(Ka + Kd*LN))
+        r,g,b = round(Io.r*(Ka + Kd*Id[0])), round(Io.g*(Ka + Kd*Id[1])),round(Io.b*(Ka + Kd*Id[2]))
         vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
         # Fin 5eme phase ##############################
@@ -200,29 +211,30 @@ H = 401  # Height
 
 # POsition des spheres
 SP1 = (0.0, 0.0, -49)
-SP2 = (-70.0, -70.0, -35)
-SP3 = (40.0, 40.0, -90)
+SP2 = (-100.0, -100.0, -50)
+SP3 = (100.0, 100.0, -50)
 
 # Position des plans
-#PP1 = ((0.0, 0.25, -1.00), (0.0, 0.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
-
+PP1 = ((0.0, 0.25, 1.00), (0.0, -12.5, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
+PP2 = ((0.0, -0.25, 1.00), (0.0, 12.5, -50.0))
 # Position des lumieres
-LP1 = (0.0, 0.0, -50)
+LP1 = (0.0, 100.0, -50.0)
 
 #Calcul focale venant de https://stackoverflow.com/questions/18176215/how-to-select-focal-lengh-in-ray-tracing
 F = round( (H/2) / np.tan(45/2) )
 
 CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
 
-#Creation des objets
-S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.5, 0.7, 0.3, False)
-S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.3, 0.2, 0.5, False)
-S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.5, 0.4, 0.5, False)
+#Creation des objets (rayon, pos, color, diffus, specular, ambiant, shadow)
+S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.3, 0.5, 0.3, False)
+S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.3, 0.5, 0.5, False)
+S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.3, 0.5, 0.5, False)
 
-#P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,250,0), None, None, None, False)
+P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,255,0), 0.5, 0.5, 0.5, False)
+P2 = plan.Plan(PP2[0], PP2[1], color.Color(150,0,155), 0.5, 0.5, 0.5, False)
 
-L1 = light.Light(LP1, color.Color(1, 1, 1))
+L1 = light.Light(LP1, color.Color(255, 255, 255))
 
 scene = Scene(CAM, [S1, S2, S3], [L1], [1,1,1], IMAGE)  #, S2, S3, P1
 
-scene.draw(400, 400)
+scene.draw(300, 300)
