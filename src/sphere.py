@@ -51,10 +51,10 @@ class Sphere(obj.Object):
             s1 = (fx+ i*t1, fy+ j*t1, fz+ k*t1)
             vec1 = vect.Vector(origin = origin_coor, extremity = s1 )
             #Seconde solution
-            t2 = (-b + delta**0.5) / (2 * a)
+            t2 = (-b - delta**0.5) / (2 * a)
             s2 = (fx+ i*t2, fy+ j*t2, fz+ k*t2)
             vec2 = vect.Vector(origin = origin_coor, extremity = s2 )
-
+            #print("Choix entre s1 et s2 ", s1, s2)
             #Comparaison pour renvoyer le plus petit == plus proche de la cam
             if vec2.norm() > vec1.norm():
                 return s1

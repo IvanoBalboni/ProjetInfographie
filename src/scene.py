@@ -21,45 +21,53 @@ class Scene:
         self.ambLights = ambLights
         self.img = img
 
-    def closest_inter(self, origin_coor, chosen_ray):
+    def closest_inter(self, origin_coor, chosen_ray, skip):
         """Va trouver le point d'intersection chaque objet et trouver
         celle ce trouvant la plus proche. A partir de ca, la fonction
         va retourner la bonne couleur du pixel de l'image"""
-        min = 0 # position de l'objet dans la liste d'objets
+        '''min = 0 # position de l'objet dans la liste d'objets
         M = self.objects[0].calcIntersection(origin_coor, chosen_ray)
         if M is not None:
             min = 0
         else:
-            min = None
+            min = None'''
         #(x,y,0) le point P
         #print("Premier z = ", Mz)
-        for k in range(1, len(self.objects)):
+        
+        min = None
+        M = None
+        k = 0
+        while k < len(self.objects):
+        #for k in range(1, len(self.objects)):
             '''
-            calcule l'intersection avec chaque objet et compare sur l'axe
+            Calcul l'intersection avec chaque objet et compare sur l'axe
             z quel est l'intersection la plus proche de la camera.
             '''
-            T = self.objects[k].calcIntersection(origin_coor, chosen_ray)
-            if T is not None:
-                #print("Potentiel prochain z est: ", Tz)
-                if min is not None:
-                    FT = vect.Vector(origin =chosen_ray.vec, extremity =T)
-                    FM = vect.Vector(origin =chosen_ray.vec, extremity =M)
-                    #print(M, TM)
-                    #vu que les intersections sont sur la meme droite on peut tester
-                    #la direction du vecteur TM pour determiner le plus proche
-                    if FT.norm() > FM.norm():
+            if k != skip:
+                T = self.objects[k].calcIntersection(origin_coor, chosen_ray)
+                if T is not None:
+                    #print("Potentiel prochain z est: ", Tz)
+                    if min is not None:
+                        FT = vect.Vector(origin =chosen_ray.vec, extremity =T)
+                        FM = vect.Vector(origin =chosen_ray.vec, extremity =M)
+                        #print(M, TM)
+                        #vu que les intersections sont sur la meme droite on peut tester
+                        #la direction du vecteur TM pour determiner le plus proche
+                        if FT.norm() > FM.norm():
+                            min = k
+                            M = T
+                    else:
                         min = k
                         M = T
-                else:
-                    min = k
-                    M = T
+            k += 1
         if min is None:
             return None
+        #print("Chosen is ", M)
         return (M, min)
 
     def traceRay(self, origin_coor, chosen_ray):
         # 1er phase: Trouver un point d'intersection ################
-        test_inter = self.closest_inter(origin_coor, chosen_ray)
+        test_inter = self.closest_inter(origin_coor, chosen_ray, len(self.objects))
 
         #print(coor_inter, obj_min)
         if test_inter is None:  # == Pas d'intersection trouve
@@ -119,15 +127,40 @@ class Scene:
 
         Id = (0, 0, 0)  #Couleur noire
         for i in range(len(self.lights)):
-            L = (vect.Vector(origin = self.lights[i].pos, extremity = coor_inter)).normalize()
+            L = (vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)).normalize()
+            
+            
+            Rl = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L)
+            closest_obj = self.closest_inter(coor_inter, L, obj_min) # Trouve l'element le plus proche
             LN = L.scalarProduct(N)
+            # Calcul des distances pour savoir si l'intersection la plus proche est avant ou apres
+            # la lumiere:
+            if closest_obj != None:  
+                dist_light = np.sqrt(np.sum(np.square(np.subtract(self.lights[i].pos, coor_inter))))
+                dist_obj = np.sqrt(np.sum(np.square(np.subtract(closest_obj[0], coor_inter))))
+                '''print("Obj is", obj_min)
+                print("Coor init", coor_inter)
+                print("Coor lum", self.lights[i].pos)
+                print("Coor obj", closest_obj[0]) 
+                print("Rl est", Rl)'''
             #couleur de lumiere pas sur de laisser
-            if obj_min == self.closest_inter(self.lights[i].pos, L)[1]:
+            #if obj_min == self.closest_inter(self.lights[i].pos, L)[1]:
+            if ((closest_obj == None) or (dist_light < dist_obj)) and LN>0:  # Si aucune intersection ou lumiere + proche
+                # Si LN est < 0 alors on va avoir du noir car on aura multiplier par exemple un 255* - quelque chose
+                # Ce qui rend impossible l'addition par la suite
+                '''print("Obj is", obj_min)
+                print("Coor init", coor_inter)
+                print("Coor lum", self.lights[i].pos)
+                print("Coor obj", 0 if (closest_obj == None) else closest_obj[0]) '''
+                if coor_inter[0] < -100 and coor_inter[1] < -100:
+                    print("Coor ", coor_inter)
+                    print("Welp LN ", LN)
                 col = self.lights[i].color
-                r,g,b = col.r, col.g, col.b
-                r,g,b = r*LN, g*LN, b*LN
+                col_r, col_g, col_b = col.r, col.g, col.b
+                
+                new_r, new_g, new_b = col_r*LN, col_g*LN, col_b*LN
                 Ir,Ig,Ib = Id
-                Id = (Ir+r, Ig+g, Ib+b)
+                Id = (Ir+new_r, Ig+new_g, Ib+new_b)
 
             #Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
             #Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
@@ -143,7 +176,7 @@ class Scene:
             else:
                 Id = (0,0,0)
             """
-        print(Id)
+        #print(Id)
         #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
 
         # Fin 4eme phase ########################
@@ -155,17 +188,19 @@ class Scene:
         Io = self.objects[obj_min].color
         #print("Io",Io)
         #print("Id",Id[0],Id[1],Id[2])
-
+        #print("Ka puis ambLights puis produit", Ka, self.ambLights[2], Ka*self.ambLights[2])
+        #print("Id pour etre sure et LN...", Id, LN)
         # 5eme phase: Addition de toutes les couleurs ############
-        r,g,b = round(Io.r*(Ka + Kd*Id[0])), round(Io.g*(Ka + Kd*Id[1])),round(Io.b*(Ka + Kd*Id[2]))
+        r, g, b = round(Io.r*(Ka*self.ambLights[0] + Id[0])), round(Io.g*(Ka*self.ambLights[1] + Id[1])), round(Io.b*(Ka*self.ambLights[2] + Id[2]))
         vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
+        vec_color = vec_color.scalarMult(255)
         # Fin 5eme phase ##############################
-        #print("Before", Io.r, Io.g, Io.b)
-        #print("Middle", r, g, b)
-        #print("After", vec_color)
-
-        return (r, g, b)
+        '''print("Before", Io.r, Io.g, Io.b)
+        print("Middle", r, g, b)
+        print("After", vec_color)'''
+        
+        return r, g, b
 
 
     def draw(self, width, height):
@@ -210,7 +245,7 @@ W = 401  # Width
 H = 401  # Height
 
 # POsition des spheres
-SP1 = (0.0, 0.0, -49)
+SP1 = (0.0, 0.0, -50)
 SP2 = (-100.0, -100.0, -50)
 SP3 = (100.0, 100.0, -50)
 
@@ -226,9 +261,9 @@ F = round( (H/2) / np.tan(45/2) )
 CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
 
 #Creation des objets (rayon, pos, color, diffus, specular, ambiant, shadow)
-S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.3, 0.5, 0.3, False)
-S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.3, 0.5, 0.5, False)
-S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.3, 0.5, 0.5, False)
+S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.7, 0.1, 0.2, False)
+S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.7, 0.1, 0.2, False)
+S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.7, 0.1, 0.2, False)
 
 P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,255,0), 0.5, 0.5, 0.5, False)
 P2 = plan.Plan(PP2[0], PP2[1], color.Color(150,0,155), 0.5, 0.5, 0.5, False)
