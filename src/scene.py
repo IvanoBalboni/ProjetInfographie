@@ -1,5 +1,7 @@
 import numpy as np
 from PIL import Image
+import time
+
 import vector as vect
 import camera as cam
 import plan
@@ -24,7 +26,11 @@ class Scene:
         celle ce trouvant la plus proche. A partir de ca, la fonction
         va retourner la bonne couleur du pixel de l'image"""
         min = 0 # position de l'objet dans la liste d'objets
-        (Mx, My, Mz) = self.objects[0].calcIntersection(origin_coor, chosen_ray)
+        M = self.objects[0].calcIntersection(origin_coor, chosen_ray)
+        if M is not None:
+            min = 0
+        else:
+            min = None
         #(x,y,0) le point P
         #print("Premier z = ", Mz)
         for k in range(1, len(self.objects)):
@@ -32,24 +38,36 @@ class Scene:
             calcule l'intersection avec chaque objet et compare sur l'axe
             z quel est l'intersection la plus proche de la camera.
             '''
-            (Tx, Ty, Tz) = self.objects[k].calcIntersection(origin_coor, chosen_ray)
-            #print("Potentiel prochain z est: ", Tz)
-            if( Tz <  0) and (Tz < Mz):
-                (Mx, My, Mz) = (Tx, Ty, Tz)
-                min = k
-        return ((Mx, My, Mz), min)
+            T = self.objects[k].calcIntersection(origin_coor, chosen_ray)
+            if T is not None:
+                #print("Potentiel prochain z est: ", Tz)
+                if min is not None:
+                    FT = vect.Vector(origin =chosen_ray.vec, extremity =T)
+                    FM = vect.Vector(origin =chosen_ray.vec, extremity =M)
+                    #print(M, TM)
+                    #vu que les intersections sont sur la meme droite on peut tester
+                    #la direction du vecteur TM pour determiner le plus proche
+                    if FT.norm() < FM.norm():
+                        min = k
+                        M = T
+                else:
+                    min = k
+                    M = T
+        if min is None:
+            return None
+        return (M, min)
 
     def traceRay(self, origin_coor, chosen_ray):
         # 1er phase: Trouver un point d'intersection ################
         test_inter = self.closest_inter(origin_coor, chosen_ray)
-        coor_inter = test_inter[0]
-        obj_min = test_inter[1]
 
         #print(coor_inter, obj_min)
-        if( coor_inter[2] > 0):  # == Pas d'intersection trouve
+        if test_inter is None:  # == Pas d'intersection trouve
             #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
         # Fin 1er phase #####################
+        coor_inter = test_inter[0]
+        obj_min = test_inter[1]
 
         temp = self.objects[obj_min]
         # Parametre lumiere des obj_min: /!\ ce sont des constantes compris entre 0 et 1
@@ -121,20 +139,20 @@ class Scene:
 
         #print("intersection", coor_inter, "objet:", obj_min)
         LN = L.scalarProduct(N)
-        print("LN",LN)
-        print("Kd",Kd)
+        #print("LN",LN)
+        #print("Kd",Kd)
         Io = self.objects[obj_min].color
-        print("Io",Io)
-        print("Id",Id[0],Id[1],Id[2])
+        #print("Io",Io)
+        #print("Id",Id[0],Id[1],Id[2])
 
         # 5eme phase: Addition de toutes les couleurs ############
         r,g,b = round(Io.r*(Ka + Kd*LN)), round(Io.g*(Ka + Kd*LN)),round(Io.b*(Ka + Kd*LN))
         vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
         # Fin 5eme phase ##############################
-        print("Before", Io.r, Io.g, Io.b)
-        print("Middle", r, g, b)
-        print("After", vec_color)
+        #print("Before", Io.r, Io.g, Io.b)
+        #print("Middle", r, g, b)
+        #print("After", vec_color)
 
         return (r, g, b)
 
@@ -148,6 +166,8 @@ class Scene:
         '''
         dessin
         '''
+        print("Debut boucle draw")
+        drawStart = time.time()
         for i in range(width):
             for j in range(height):
                 #print("POUR I J ", i, j, "X ET Y SONT ", x, y)
@@ -157,6 +177,7 @@ class Scene:
                 #print("In draw type is", type(true_ray))
                 #print("from draw", true_ray)
                 img.putpixel((i, j), (self.traceRay(origin_coor, true_ray)))
+        print("duree draw",time.time()-drawStart)
 
         img.save(IMAGE)
         test = Image.open(IMAGE)
@@ -179,8 +200,8 @@ H = 401  # Height
 
 # POsition des spheres
 SP1 = (0.0, 0.0, -49)
-#SP2 = (-100.0, -100.0, -50)
-#SP3 = (100.0, 100.0, -51)
+SP2 = (-70.0, -70.0, -35)
+SP3 = (40.0, 40.0, -90)
 
 # Position des plans
 #PP1 = ((0.0, 0.25, -1.00), (0.0, 0.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
@@ -195,13 +216,13 @@ CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
 
 #Creation des objets
 S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.5, 0.7, 0.3, False)
-#S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), None, 0.2, None, False)
-#S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), None, 0.2, None, False)
+S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.3, 0.2, 0.5, False)
+S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.5, 0.4, 0.5, False)
 
 #P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,250,0), None, None, None, False)
 
 L1 = light.Light(LP1, color.Color(1, 1, 1))
 
-scene = Scene(CAM, [S1], [L1], [1,1,1], IMAGE)  #, S2, S3, P1
+scene = Scene(CAM, [S1, S2, S3], [L1], [1,1,1], IMAGE)  #, S2, S3, P1
 
-scene.draw(700, 700)
+scene.draw(400, 400)

@@ -17,14 +17,14 @@ class Sphere(obj.Object):
         (fx, fy, fz) = origin_coor # focale : F
         #print("F in calcInter", fx, fy, fz)
         cx, cy, cz = (fx-l), (fy-m), (fz-n) # (x-l) (y-m) (z-n)
-        
+
         # (x - l)^2 + (y - m)^2 + (z - n)^2 - r^2
         # On cherche tous les resultats pour faire a*t^2 + b*t + c
         # On utilise l'eq implicite des plans pour x, y et z sous la forme
         # M + tD avec M la Focale et D le rayon de Vue
         # On prend tous les D^2 pour a
         # tous les 2*D*(M+l/m/n) pour b
-        # tous les (M+l/m/n)^2 - r^2 pour c   
+        # tous les (M+l/m/n)^2 - r^2 pour c
         a = i**2 + j **2 + k **2
         b = 2 * (cx *i + cy*j + cz *k )
         c = cx**2 + cy**2 + cz**2 - self.rayon**2
@@ -38,9 +38,9 @@ class Sphere(obj.Object):
         print("b est: ", b)
         print("c est: ", c)
         print("Delta est: ", delta, "\n")'''
-        #x, y, z = (fx + i *t), (fy + j *t), (fz + k *t) 
+        #x, y, z = (fx + i *t), (fy + j *t), (fz + k *t)
         if delta < 0:
-            return (0, 0, 50)
+            return None
         elif delta == 0:
             t = -b / (2*a)
             #print("t is: ", t)
@@ -56,7 +56,7 @@ class Sphere(obj.Object):
             vec2 = vect.Vector(origin = origin_coor, extremity = s2 )
 
             #Comparaison pour renvoyer le plus petit == plus proche de la cam
-            if vec2.norm() > vec1.norm(): 
+            if vec2.norm() > vec1.norm():
                 return s1
             else:
                 return s2
@@ -74,4 +74,3 @@ P0 = (5,0)
 I = P.calcIntersection(CAM, P0, (11,11))
 print(I)
 print(P.calcNorm(I))'''
-

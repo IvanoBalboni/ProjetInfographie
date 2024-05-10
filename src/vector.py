@@ -28,7 +28,11 @@ class Vector():
 
     def subtract(self, v2):
         """Soustraction vecteur x vecteur, retourne un vecteur."""
-        return Vector(vec = np.subtract(self.vec,v2.vec))
+        return Vector(vec = np.subtract(self.vec, v2.vec))
+
+    def same(self, v2):
+        """compare si self == v2, retourne BOOL"""
+        return self.vec == v2
 
     def scalarMult(self, s):
         """Multiplication vecteur x scalaire, retourne un vecteur."""
@@ -50,6 +54,8 @@ class Vector():
 
     def normalize(self):
         n = self.norm()
+        if n == 0:
+            return Vector(vec=(0,0,0))
         return Vector(vec = np.divide(self.vec,n))
 
     def __getitem__(self, n):
