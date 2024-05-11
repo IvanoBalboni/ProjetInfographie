@@ -123,14 +123,24 @@ class Scene:
 
         # Fin 3eme phase ###########
 
-        # 4eme phase: Calcul de l'ombre + composante diffus ############
+        # 4eme phase: Calcul composante diffus et speculaire ############
 
-        Id = (0, 0, 0)  #Couleur noire
+        Id = 0  #Couleur noire
+        spec = 0
         for i in range(len(self.lights)):
-            L = (vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)).normalize()
+            
+            # Calcul composante speculaire ###############
+            # Ks * (R . V)**n avec R rayon reflechie vers la lumiere
+            # V rayon de vue et n le coefficient de surbrillance
+            n = 10
+            L = (vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)).normalize() # Rayon vers lum
+            Rl = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L) # Rayon reflechie vers la lum
+            #print("Rl is and then N and hteir product", Rl, IV.normalize(), Rl.scalarProduct(IV.normalize()))
+            spec = spec + np.power((Rl.normalize()).scalarProduct(IV.normalize()), n)
             
             
-            Rl = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L)
+            
+            # Partie diffusion
             closest_obj = self.closest_inter(coor_inter, L, obj_min) # Trouve l'element le plus proche
             LN = L.scalarProduct(N)
             # Calcul des distances pour savoir si l'intersection la plus proche est avant ou apres
@@ -152,15 +162,16 @@ class Scene:
                 print("Coor init", coor_inter)
                 print("Coor lum", self.lights[i].pos)
                 print("Coor obj", 0 if (closest_obj == None) else closest_obj[0]) '''
-                if coor_inter[0] < -100 and coor_inter[1] < -100:
+                '''if coor_inter[0] < -100 and coor_inter[1] < -100:
                     print("Coor ", coor_inter)
-                    print("Welp LN ", LN)
-                col = self.lights[i].color
+                    print("Welp LN ", LN)'''
+                '''col = self.lights[i].color
                 col_r, col_g, col_b = col.r, col.g, col.b
                 
                 new_r, new_g, new_b = col_r*LN, col_g*LN, col_b*LN
                 Ir,Ig,Ib = Id
-                Id = (Ir+new_r, Ig+new_g, Ib+new_b)
+                Id = (Ir+new_r, Ig+new_g, Ib+new_b)'''
+                Id = Id + LN
 
             #Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
             #Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
@@ -180,25 +191,32 @@ class Scene:
         #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
 
         # Fin 4eme phase ########################
-
+        
+        Io = self.objects[obj_min].color
+        spec_rgb = Ks*spec
+        #print("Testis ", test, "then specular is ", spec_rgb)
+        #print("Then global ", Ka*self.ambLights[0] + Id[0] + spec_rgb)
+        
 
         #print("intersection", coor_inter, "objet:", obj_min)
         #print("LN",LN)
         #print("Kd",Kd)
-        Io = self.objects[obj_min].color
+        
         #print("Io",Io)
         #print("Id",Id[0],Id[1],Id[2])
         #print("Ka puis ambLights puis produit", Ka, self.ambLights[2], Ka*self.ambLights[2])
         #print("Id pour etre sure et LN...", Id, LN)
         # 5eme phase: Addition de toutes les couleurs ############
-        r, g, b = round(Io.r*(Ka*self.ambLights[0] + Id[0])), round(Io.g*(Ka*self.ambLights[1] + Id[1])), round(Io.b*(Ka*self.ambLights[2] + Id[2]))
+        
+        Ii = (0.5, 0.5, 0.5)  # Intensite à la lumiere
+        r, g, b = round(Io.r*(Ka*self.ambLights[0] + Ii[0]*Kd*Id) + spec_rgb), round(Io.g*(Ka*self.ambLights[1] + Ii[1]*Kd*Id) + spec_rgb), round(Io.b*(Ka*self.ambLights[2] + Ii[2]*Kd*Id) + spec_rgb)
         vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
         vec_color = vec_color.scalarMult(255)
         # Fin 5eme phase ##############################
-        '''print("Before", Io.r, Io.g, Io.b)
-        print("Middle", r, g, b)
-        print("After", vec_color)'''
+        #print("Before", Io.r, Io.g, Io.b)
+        #print("Middle", (Kd*Id), g, b)
+        #print("After", vec_color.vec[0])
         
         return r, g, b
 
@@ -246,14 +264,15 @@ H = 401  # Height
 
 # POsition des spheres
 SP1 = (0.0, 0.0, -50)
-SP2 = (-100.0, -100.0, -50)
-SP3 = (100.0, 100.0, -50)
+SP2 = (-100.0, 0.0, -50)
+SP3 = (100.0, 0.0, -50)
 
 # Position des plans
-PP1 = ((0.0, 0.25, 1.00), (0.0, -12.5, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
+PP1 = ((0.0, 0.8, 0.2), (0.0, -50.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
 PP2 = ((0.0, -0.25, 1.00), (0.0, 12.5, -50.0))
 # Position des lumieres
 LP1 = (0.0, 100.0, -50.0)
+LP2 = (0.0, -100.0, -50.0)
 
 #Calcul focale venant de https://stackoverflow.com/questions/18176215/how-to-select-focal-lengh-in-ray-tracing
 F = round( (H/2) / np.tan(45/2) )
@@ -261,15 +280,16 @@ F = round( (H/2) / np.tan(45/2) )
 CAM = cam.Camera(W, H, (0.0, 0.0, 0.0), (0.0, 1.0, 0.0), F)
 
 #Creation des objets (rayon, pos, color, diffus, specular, ambiant, shadow)
-S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.7, 0.1, 0.2, False)
-S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.7, 0.1, 0.2, False)
-S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.7, 0.1, 0.2, False)
+S1 = sphere.Sphere(50, SP1, color.Color(255, 255, 0), 0.5, 0.3, 0.2, False)
+S2 = sphere.Sphere(50, SP2, color.Color(255, 0, 0), 0.8, 0.1, 0.1, False)
+S3 = sphere.Sphere(50, SP3, color.Color(0, 0, 255), 0.5, 0.3, 0.2, False)
 
 P1 = plan.Plan(PP1[0], PP1[1], color.Color(0,255,0), 0.5, 0.5, 0.5, False)
 P2 = plan.Plan(PP2[0], PP2[1], color.Color(150,0,155), 0.5, 0.5, 0.5, False)
 
 L1 = light.Light(LP1, color.Color(255, 255, 255))
+L2 = light.Light(LP2, color.Color(255, 255, 255))
 
-scene = Scene(CAM, [S1, S2, S3], [L1], [1,1,1], IMAGE)  #, S2, S3, P1
+scene = Scene(CAM, [S1, S2, S3], [L1, L2], [1,1,1], IMAGE)  #, S2, S3, P1
 
 scene.draw(300, 300)
