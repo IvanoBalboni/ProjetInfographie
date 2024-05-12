@@ -10,7 +10,7 @@ import sphere
 import light
 
 IMAGE = "rendu.png"
-COUL_FOND = (30, 30, 30)
+COUL_FOND = (130, 130, 130)
 
 class Scene:
     """Classe qui va nous cree l'image finale. """
@@ -53,6 +53,7 @@ class Scene:
                         #print(M, TM)
                         #vu que les intersections sont sur la meme droite on peut tester
                         #la direction du vecteur TM pour determiner le plus proche
+
                         if FT.norm() > FM.norm():
                             min = k
                             M = T
@@ -65,9 +66,9 @@ class Scene:
         #print("Chosen is ", M)
         return (M, min)
 
-    def traceRay(self, origin_coor, chosen_ray):
+    def traceRay(self, origin_coor, chosen_ray, skip):
         # 1er phase: Trouver un point d'intersection ################
-        test_inter = self.closest_inter(origin_coor, chosen_ray, len(self.objects))
+        test_inter = self.closest_inter(origin_coor, chosen_ray, skip)
 
         #print(coor_inter, obj_min)
         if test_inter is None:  # == Pas d'intersection trouve
@@ -86,16 +87,6 @@ class Scene:
         N = temp.calcNorm( coor_inter ) # Norme de l'obj_min
         #print("N: ", type(N))
 
-        # Methode vu dans https://omaraflak.medium.com/ray-tracing-from-scratch-in-python-41670e6a96f9 :
-        # Pour les prochains calculs traceRay de notre objet,
-        # Afin d'éviter les risques que notre objet soit compter comme une intersection
-        # Nous rajoutons deplacons légérement notre intersection suivant la normale de l'objet
-        small_change = N.scalarMult(1e-5)
-        coor_inter_ray = (small_change[0] + coor_inter[0], small_change[1] + coor_inter[1], small_change[2] + coor_inter[2])
-        # /!\ Les coordonnees ne sont pas des vecteurs
-        #print("Coor inter", coor_inter)
-        #print("Coor inter ray", coor_inter_ray)
-
         # 2eme phase: Trouver le rayon reflechie  au point d'intersection Ri ####
         # R = 2(-I.N).N+I
         # Avec N norme du point d'intersection de l'objet
@@ -110,9 +101,9 @@ class Scene:
         print("test: ", test1)
         test2 = test1.scalarProduct(N)'''
         # Rayon reflechi en P :
-        Ri = ( N.scalarMult( IV.scalarMult(-1).scalarProduct(N) *2 ) ).addition(IV)
-        #print(Ri)
-        #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
+        Ri = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L)
+        #print("NB RECURSION", obj_min)
+        Cr = np.multiply(self.traceRay(coor_inter, Ri, obj_min), (Ks))
         #print(Cr)
 
         # Fin 2eme phase #################
@@ -173,27 +164,18 @@ class Scene:
                 Id = (Ir+new_r, Ig+new_g, Ib+new_b)'''
                 Id = Id + LN
 
-            #Il = vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)
-            #Rl = ( N.scalarMult( Il.scalarMult(-1).scalarProduct(N) *2 ) ).addition(Il)
-            #closest_obj = self.closest_inter(coor_inter_ray, Rl) # Trouve l'element le plus proche
-            # Find the distance between the two points
-            #dist_light = np.sqrt(np.sum(np.square(np.subtract(self.lights[i].pos, coor_inter))))
-            #print("DISTANCE OBJECT LIGHT", dist_light)
-            #dist_obj = np.sqrt(np.sum(np.square(np.subtract(closest_obj[0], coor_inter))))
-            #print("DISTANCE OBJECT OBJ", dist_obj, obj_min)
-            """
-            if dist_light < dist_obj:
-                Id = (255,255,255)
-            else:
-                Id = (0,0,0)
-            """
+
         #print(Id)
         #Cr = np.multiply(self.traceRay(coor_inter_ray, Ri), (Ks))
 
         # Fin 4eme phase ########################
         
-        Io = self.objects[obj_min].color
-        spec_rgb = Ks*spec
+        Io = self.objects[obj_min].color  # Couleur de l'objet
+        Ii = (0.9, 0.9, 0.9)  # Intensite à la lumiere
+        
+        spec_rgb = Ks*spec  # Lumiere speculaire
+        
+        #print(Cr)
         #print("Testis ", test, "then specular is ", spec_rgb)
         #print("Then global ", Ka*self.ambLights[0] + Id[0] + spec_rgb)
         
@@ -206,16 +188,23 @@ class Scene:
         #print("Id",Id[0],Id[1],Id[2])
         #print("Ka puis ambLights puis produit", Ka, self.ambLights[2], Ka*self.ambLights[2])
         #print("Id pour etre sure et LN...", Id, LN)
-        # 5eme phase: Addition de toutes les couleurs ############
         
-        Ii = (0.5, 0.5, 0.5)  # Intensite à la lumiere
-        r, g, b = round(Io.r*(Ka*self.ambLights[0] + Ii[0]*Kd*Id) + spec_rgb), round(Io.g*(Ka*self.ambLights[1] + Ii[1]*Kd*Id) + spec_rgb), round(Io.b*(Ka*self.ambLights[2] + Ii[2]*Kd*Id) + spec_rgb)
-        vec_color = vect.Vector(vec = (r, g, b))
+        
+        # 5eme phase: Addition de toutes les couleurs ############
+        # Nous utilisons le modele de Phong:
+        # Io Ia ka + Ii( Io kd( L.N) + ks( R.V)**n)
+        
+        r = round(Io.r*Ka*self.ambLights[0] + Ii[0]*(Io.r*Kd*Id + Ii[0]*spec_rgb) + Cr[0])
+        g = round(Io.g*Ka*self.ambLights[1] + Ii[1]*(Io.g*Kd*Id + Ii[1]*spec_rgb) + Cr[1])
+        b = round(Io.b*Ka*self.ambLights[2] + Ii[2]*(Io.b*Kd*Id + Ii[2]*spec_rgb) + Cr[2])
+        pix_rgb = color.Color(r, g, b)
+        pix_rgb.norm_color()
+        """vec_color = vect.Vector(vec = (r, g, b))
         vec_color = vec_color.normalize()
-        vec_color = vec_color.scalarMult(255)
+        vec_color = vec_color.scalarMult(255)"""
         # Fin 5eme phase ##############################
         #print("Before", Io.r, Io.g, Io.b)
-        #print("Middle", (Kd*Id), g, b)
+        #print("Middle", r, g, b)
         #print("After", vec_color.vec[0])
         
         return r, g, b
@@ -224,23 +213,18 @@ class Scene:
     def draw(self, width, height):
         """Va faire l'appel recursif pour chaque pixel de notre image """
         img = Image.new('RGB', (width, height), color = (100,60,100))
-        #P0 = [-(width/2-0.5), height/2-0.5]  # Base utilisee pour tout les suivant
-        #topleft_x = round(self.cam.pos[0]) - width//2
-        #y = round(self.cam.pos[1]) + height//2
-        '''
-        dessin
-        '''
+        
         print("Debut boucle draw")
         drawStart = time.time()
         for i in range(width):
             for j in range(height):
-                #print("POUR I J ", i, j, "X ET Y SONT ", x, y)
-                origin_coor = self.cam.F
+                #print("POUR I J ", i, j)
+                origin_coor = self.cam.F  # Utilisation de la focale pour nos calcul
                 #print("F in draw", origin_coor)
                 true_ray = self.cam.ray((i, j), (width, height))
                 #print("In draw type is", type(true_ray))
                 #print("from draw", true_ray)
-                img.putpixel((i, j), (self.traceRay(origin_coor, true_ray)))
+                img.putpixel((i, j), (self.traceRay(origin_coor, true_ray, len(self.objects))))
         print("duree draw",time.time()-drawStart)
 
         img.save(IMAGE)
@@ -268,7 +252,7 @@ SP2 = (-100.0, 0.0, -50)
 SP3 = (100.0, 0.0, -50)
 
 # Position des plans
-PP1 = ((0.0, 0.8, 0.2), (0.0, -50.0, -50.0)) #Premier pour la norm, 2eme pour la pos du plan
+PP1 = ((0.0, 1.0, 0.0), (0.0, -50.0, 0.0)) #Premier pour la norm, 2eme pour la pos du plan
 PP2 = ((0.0, -0.25, 1.00), (0.0, 12.5, -50.0))
 # Position des lumieres
 LP1 = (0.0, 100.0, -50.0)
