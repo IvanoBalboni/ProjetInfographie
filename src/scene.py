@@ -77,7 +77,8 @@ class Scene:
         obj_min = test_inter[1]
 
         temp = self.objects[obj_min]
-        # Parametre lumiere des obj_min: /!\ ce sont des constantes compris entre 0 et 1
+        # Parametre lumiere des obj_min:
+        # /!\ce sont des constantes compris entre 0 et 1
         Ks = temp.specular
         Kd = temp.diffus
         Ka = temp.ambiant
@@ -85,7 +86,7 @@ class Scene:
         N = temp.calcNorm( coor_inter ) # Norme de l'obj_min
         #print("N: ", type(N))
 
-        # 2eme phase: Trouver le rayon reflechie  au point d'intersection Ri ####
+        # 2eme phase: Trouver le rayon reflechie  au point d'intersection Ri ###
         # R = 2(-I.N).N+I
         # Avec N norme du point d'intersection de l'objet
         # I rayon de Vue    IV
@@ -123,7 +124,7 @@ class Scene:
             # Ks * (R . V)**n avec R rayon reflechie vers la lumiere
             # V rayon de vue et n le coefficient de surbrillance
             n = 10
-            L = (vect.Vector(origin = coor_inter, extremity = self.lights[i].pos)).normalize() # Rayon vers lum
+            L = (vect.Vector(origin=coor_inter, extremity=self.lights[i].pos)).normalize() # Rayon vers lum
             Rl = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L) # Rayon reflechie vers la lum
             #print("Rl is and then N and hteir product", Rl, IV.normalize(), Rl.scalarProduct(IV.normalize()))
             spec = spec + np.power((Rl.normalize()).scalarProduct(IV.normalize()), n)
