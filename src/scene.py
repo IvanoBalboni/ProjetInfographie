@@ -69,7 +69,7 @@ class Scene:
         test_inter = self.closest_inter(origin_coor, chosen_ray, skip)
 
         #print(coor_inter, obj_min)
-        if test_inter is None or iter >4:  # == Pas d'intersection trouve
+        if test_inter is None or iter >8:  # == Pas d'intersection trouve
             #print("pas d'intersection au pixel",i,j)
             return COUL_FOND
         # Fin 1er phase #####################
@@ -100,9 +100,9 @@ class Scene:
         print("test: ", test1)
         test2 = test1.scalarProduct(N)'''
         # Rayon reflechi en P :
-        Ri = ( N.scalarMult( L.scalarMult(-1).scalarProduct(N) *2 ) ).addition(L)
+        Ri = ( N.scalarMult.(L.scalarProduct(N) **iter) ).addition(L)
         #print("NB RECURSION", obj_min)
-        Cr = np.multiply(self.traceRay(coor_inter, Ri, obj_min, iter+1), (Ks))
+        Cr = np.multiply(self.traceRay(coor_inter, Ri, obj_min, iter+1),(Ks))
         #Cr = np.multiply(L.scalarProduct(N), (Ks))
         #print(Cr)
 
@@ -278,6 +278,6 @@ P2 = plan.Plan((0.0,1.0,0.0), (0.0,-65.0,-50.0), color.Color(0,255,0), 0.5, 0.5,
 L1 = light.Light(LP1, color.Color(255, 255, 255))
 L2 = light.Light(LP2, color.Color(255, 255, 255))
 
-scene = Scene(CAM, [S1,S2,S3,P1, P2], [L1, L2], [1,1,1], IMAGE)  #, S2, S3, P1
+scene = Scene(CAM, [S1,S2,S3, P2], [L1, L2], [1,1,1], IMAGE)  #, S2, S3, P1
 
 scene.draw(300, 300)
