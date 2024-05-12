@@ -18,12 +18,14 @@ class Plan(obj.Object):
 		(i, j, k) = chosen_ray.vec # rayon de vue : FP
 		(fx, fy, fz) = origin_coor # focale : F
 
-		D = (A*x) +(B*z) +(C*y)
+		D = -(A*x) -(B*z) -(C*y)
 		div = (A*i + B*j + C*k)
-		if div == 0:
+		angle = self.norm.scalarProduct(chosen_ray.normalize())
+		if angle > -0.08 or div ==0:
 			return None
 
-		t =  - (A*fx + B*fy + C*fz +D) / div
+		t =  -(A*fx + B*fy + C*fz +D) / div
+
 
 		(r1, r2, r3) = (fx + t*i,fy + t*j, fz + t*k)
 
